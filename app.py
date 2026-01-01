@@ -1,84 +1,115 @@
-# app.py
 import streamlit as st
 import pandas as pd
 import io
 
-# 1. Configuração da Página (Título, Ícone)
-st.set_page_config(page_title="Faxina de Dados", page_icon="🧹")
+# Configuração da Página (Título e Ícone da Aba)
+st.set_page_config(page_title="Limpador de Dados Pro", page_icon="🧹", layout="centered")
 
-# 2. Interface Visual (Frontend)
-st.title("🧹 Faxina de Dados Automática")
-st.markdown("""
-Sua planilha está bagunçada? 
-Suba seu arquivo Excel ou CSV abaixo e nossa IA (na verdade, Python puro) vai:
-- ✅ Padronizar Nomes (Maiúsculas/Minúsculas)
-- ✅ Limpar CPFs (Apenas números)
-- ✅ Padronizar E-mails (Minúsculas)
-""")
+# --- FUNÇÃO 1: A FERRAMENTA (Sua lógica de limpeza fica aqui) ---
+def mostrar_ferramenta():
+    st.title("🧰 Sua Área de Trabalho")
+    st.info(f"Logado com a chave: {st.session_state['chave_acesso']}")
+    
+    # Botão de Sair
+    if st.button("Sair / Logout"):
+        st.session_state['logado'] = False
+        st.rerun()
+        
+    st.markdown("---")
+    
+    # --- SEU CÓDIGO DE LIMPEZA ORIGINAL COMEÇA AQUI ---
+    arquivo = st.file_uploader("Carregue seu arquivo Excel ou CSV", type=["xlsx", "csv"])
 
-# 3. Botão de Upload
-arquivo = st.file_uploader("Carregue seu arquivo aqui", type=["xlsx", "csv"])
+    if arquivo is not None:
+        try:
+            if arquivo.name.endswith('.csv'):
+                df = pd.read_csv(arquivo)
+            else:
+                df = pd.read_excel(arquivo)
 
-# 4. A Lógica (Só roda se tiver arquivo)
-if arquivo is not None:
-    try:
-        # Lê o arquivo (detecta se é Excel ou CSV)
-        if arquivo.name.endswith('.csv'):
-            df = pd.read_csv(arquivo)
-        else:
-            df = pd.read_excel(arquivo)
-
-        st.subheader("🔍 Visualizando os Dados Sujos (Amostra)")
-        st.dataframe(df.head())
-
-        # Botão para processar
-        if st.button("Iniciar Faxina"):
-            
-            # --- SUA LÓGICA AQUI (Versão Pandas) ---
-            # Tratamento de erro caso a coluna não exista
-            colunas = df.columns.str.lower() # facilita a busca
-            
-            # Limpeza de Nomes (se achar coluna parecida com 'nome')
-            cols_nome = [c for c in colunas if 'nome' in c]
-            if cols_nome:
-                col = cols_nome[0] # pega a primeira que achou
-                # Remove espaços extras e coloca em Title Case
-                df[col] = df[col].astype(str).str.strip().str.replace(r'\s+', ' ', regex=True).str.title()
-                st.success(f"Coluna '{col}' padronizada!")
-
-            # Limpeza de CPF (se achar coluna parecida com 'cpf')
-            cols_cpf = [c for c in colunas if 'cpf' in c]
-            if cols_cpf:
-                col = cols_cpf[0]
-                # Remove tudo que não é dígito
-                df[col] = df[col].astype(str).str.replace(r'\D', '', regex=True)
-                st.success(f"Coluna '{col}' limpa (apenas números)!")
-
-            # Limpeza de Email (se achar coluna parecida com 'email')
-            cols_email = [c for c in colunas if 'email' in c or 'e-mail' in c]
-            if cols_email:
-                col = cols_email[0]
-                df[col] = df[col].astype(str).str.lower().str.replace(' ', '')
-                st.success(f"Coluna '{col}' normalizada!")
-
-            st.markdown("---")
-            st.subheader("✨ Dados Limpos e Prontos")
+            st.subheader("Prévia dos Dados")
             st.dataframe(df.head())
 
-            # 5. Botão de Download
-            # Converte o DataFrame de volta para CSV na memória
-            csv_convertido = df.to_csv(index=False).encode('utf-8')
-            
-            st.download_button(
-                label="📥 Baixar Planilha Limpa",
-                data=csv_convertido,
-                file_name="dados_limpos.csv",
-                mime="text/csv",
-            )
-            
-    except Exception as e:
-        st.error(f"Erro ao ler o arquivo: {e}")
+            if st.button("Processar Arquivo"):
+                # Simulação da limpeza (Insira sua lógica completa aqui)
+                # Exemplo rápido para teste:
+                colunas_texto = df.select_dtypes(include=['object']).columns
+                for col in colunas_texto:
+                    df[col] = df[col].astype(str).str.upper().str.strip()
+                
+                st.success("Limpeza Concluída!")
+                
+                # Conversão para download
+                buffer = io.BytesIO()
+                with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+                    df.to_excel(writer, index=False)
+                    
+                st.download_button(
+                    label="📥 Baixar Excel Limpo",
+                    data=buffer,
+                    file_name="dados_limpos.xlsx",
+                    mime="application/vnd.ms-excel"
+                )
 
-# Rodapé
-st.markdown("---")
-st.caption("Desenvolvido com Python e Streamlit")
+        except Exception as e:
+            st.error(f"Erro ao processar: {e}")
+    # --- FIM DO CÓDIGO DE LIMPEZA ---
+
+# --- FUNÇÃO 2: A PÁGINA DE VENDAS (Vitrine) ---
+def mostrar_pagina_vendas():
+    st.title("🚀 Pare de perder tempo no Excel")
+    st.markdown("### A solução definitiva para higienização de dados corporativos.")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        **O que nosso robô faz por você:**
+        * ✅ **Padroniza Nomes:** Remove espaços e ajusta maiúsculas.
+        * ✅ **Valida CPFs:** Remove pontos e traços automaticamente.
+        * ✅ **Sanitiza E-mails:** Prepara listas para marketing.
+        
+        Tudo isso sem armazenar seus dados. **Privacidade Total.**
+        """)
+        st.markdown("---")
+        st.metric(label="Linhas Processadas", value="150.000+")
+        
+    with col2:
+        # Aqui você pode colocar uma imagem ou vídeo depois
+        st.info("💡 Ideal para Escritórios de Advocacia, Clínicas e RH.")
+        
+        st.markdown("### Apenas R$ 49,90 / ano")
+        st.link_button("👉 Comprar Acesso Agora", "https://link.mercadopago.com.br/SEU_LINK_AQUI")
+
+# --- CONTROLE PRINCIPAL (O Maestro) ---
+def main():
+    # Inicializa a variável de sessão se não existir
+    if 'logado' not in st.session_state:
+        st.session_state['logado'] = False
+
+    # BARRA LATERAL (Sidebar) para Login
+    with st.sidebar:
+        if not st.session_state['logado']:
+            st.header("Área do Cliente")
+            chave_digitada = st.text_input("Insira sua Chave de Acesso", type="password")
+            
+            if st.button("Entrar"):
+                # --- VALIDAÇÃO DA SENHA ---
+                # Por enquanto está fixo. Depois conectaremos ao Google Sheets aqui.
+                if chave_digitada == "CLIENTE-VIP": 
+                    st.session_state['logado'] = True
+                    st.session_state['chave_acesso'] = chave_digitada
+                    st.rerun() # Recarrega a página para mostrar a ferramenta
+                else:
+                    st.error("Chave inválida!")
+        else:
+            st.write("✅ Status: Conectado")
+
+    # DECISÃO DO QUE MOSTRAR NA TELA
+    if st.session_state['logado']:
+        mostrar_ferramenta()
+    else:
+        mostrar_pagina_vendas()
+
+if __name__ == "__main__":
+    main()
